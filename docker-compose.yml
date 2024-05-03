@@ -1,0 +1,11 @@
+services:
+  python:
+    build: docker/python/
+    tty: true
+    ports:
+      - 9004:9004
+    volumes:
+      - ./src:/usr/app/src/
+      - ./output:/usr/app/output
+      - ./input:/usr/app/input
+      - ./models:/usr/app/models

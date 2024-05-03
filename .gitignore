@@ -1,0 +1,8 @@
+# mac
+# General
+.DS_Store
+.AppleDouble
+.LSOverride
+
+output/crop
+output/nyp
