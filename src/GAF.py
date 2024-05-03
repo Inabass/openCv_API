@@ -36,18 +36,23 @@ def rotateImage(img, orientation):
     return img_rotate
 
 def main(image):
-    img = io.BytesIO(image)
-    img_pil = Image.open(img)
-    try:
-        exifinfo = img_pil._getexif()
-        orientation = exifinfo.get(0x112, 1)
-        img_tmp_rotate = rotateImage(img_pil, orientation)
-    except:
-        pass
+    # img = io.BytesIO(image)
+    # img_pil = Image.open(img)
+    # try:
+    #     exifinfo = img_pil._getexif()
+    #     orientation = exifinfo.get(0x112, 1)
+    #     img_tmp_rotate = rotateImage(img_pil, orientation)
+    # except:
+    #     pass
 
-
-    img_numpy = np.asarray(img_pil)
-    image = cv2.cvtColor(img_numpy, cv2.IMREAD_GRAYSCALE)
+    # img_numpy = np.asarray(img_pil)
+    # cv2.imwrite(os.path.join("../input/train/", "target.jpg".format(1)), img_numpy)
+    image = cv2.imread(str(image))
+    
+    h, w = image.shape[:2]
+    width = 800
+    height = round(h * (width / w))
+    image = cv2.resize(image, dsize=(width, height))
 
     channels = 1 if len(image.shape) == 2 else image.shape[2]
     if channels == 1:
@@ -57,7 +62,7 @@ def main(image):
 
 
     # モデルを読み込む
-    weights = "../models/yunet.onnx"
+    weights = "../models/yunet3.onnx"
     face_detector = cv2.FaceDetectorYN_create(weights, "", (0, 0))
     weights = "../models/face_recognizer_fast.onnx"
     face_recognizer = cv2.FaceRecognizerSF_create(weights, "")
@@ -69,6 +74,7 @@ def main(image):
     # 顔を検出する
     _, faces = face_detector.detect(image)
 
+    print(faces)
 
     # 検出された顔を切り抜く
     aligned_faces = []

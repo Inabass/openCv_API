@@ -6,7 +6,7 @@ import cv2
 from PIL import Image
 import io
 
-COSINE_THRESHOLD = 0.003
+COSINE_THRESHOLD = 0.363
 NORML2_THRESHOLD = 1.128
 
 # 特徴を辞書と比較してマッチしたユーザーとスコアを返す関数
@@ -58,38 +58,34 @@ def main(image):
         dictionary.append((user_id, feature))
 
     # モデルを読み込む
-    weights = "../models/yunet.onnx"
+    weights = "../models/yunet3.onnx"
     face_detector = cv2.FaceDetectorYN_create(weights, "", (0, 0))
     weights = "../models/face_recognizer_fast.onnx"
     face_recognizer = cv2.FaceRecognizerSF_create(weights, "")
 
-    img = io.BytesIO(image)
-    img_pil = Image.open(img)
-    try:
-        exifinfo = img_pil._getexif()
-        orientation = exifinfo.get(0x112, 1)
-        img_tmp_rotate = rotateImage(img_pil, orientation)
-    except:
-        pass
+    while True:
+        # 画像を読み込む
+        image = cv2.imread(str(image))
+    
+        h, w = image.shape[:2]
+        width = 800
+        height = round(h * (width / w))
+        image = cv2.resize(image, dsize=(width, height))
 
+        # 画像が3チャンネル以外の場合は3チャンネルに変換する
+        channels = 1 if len(image.shape) == 2 else image.shape[2]
+        if channels == 1:
+            image = cv2.cvtColor(image, cv2.COLOR_GRAY2BGR)
+        if channels == 4:
+            image = cv2.cvtColor(image, cv2.COLOR_BGRA2BGR)
 
-    img_numpy = np.asarray(img_pil)
-    image = cv2.cvtColor(img_numpy, cv2.IMREAD_GRAYSCALE)
-
-    channels = 1 if len(image.shape) == 2 else image.shape[2]
-    if channels == 1:
-        image = cv2.cvtColor(image, cv2.COLOR_GRAY2BGR)
-    if channels == 4:
-        image = cv2.cvtColor(image, cv2.COLOR_BGRA2BGR)
-
-    # 入力サイズを指定する
+        # 入力サイズを指定する
         height, width, _ = image.shape
         face_detector.setInputSize((width, height))
 
         # 顔を検出する
         result, faces = face_detector.detect(image)
         faces = faces if faces is not None else []
-
 
         for face in faces:
             # 顔を切り抜き特徴を抽出する
@@ -98,7 +94,6 @@ def main(image):
 
             # 辞書とマッチングする
             result, user = match(face_recognizer, feature, dictionary)
-
 
             # 顔のバウンディングボックスを描画する
             box = list(map(int, face[:4]))
@@ -116,7 +111,6 @@ def main(image):
 
         # 画像を表示する
         cv2.imwrite(os.path.join("../output/result/", "result.jpg".format(1)), image)
-        
 
 if __name__ == '__main__':
     main()
