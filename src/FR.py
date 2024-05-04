@@ -48,6 +48,13 @@ def rotateImage(img, orientation):
 
     return img_rotate
 
+def resize (image, size):
+    h, w = image.shape[:2]
+    width = size
+    height = round(h * (width / w))
+    image = cv2.resize(image, dsize=(width, height))
+    return image
+
 def main(image):
     # 特徴を読み込む
     dictionary = []
@@ -66,11 +73,25 @@ def main(image):
     while True:
         # 画像を読み込む
         image = cv2.imread(str(image))
+        originImage = image
     
         h, w = image.shape[:2]
-        width = 800
-        height = round(h * (width / w))
-        image = cv2.resize(image, dsize=(width, height))
+        _, width, _ = image.shape
+        size = width
+
+        while True:
+            image = resize(originImage, size)
+            # 入力サイズを指定する
+            height, width, _ = image.shape
+            face_detector.setInputSize((width, height))
+            # 顔を検出する
+            hoge, faces = face_detector.detect(image)
+            if not(faces is None):
+                break
+            size = size - 100
+            if size < 300:
+                break
+            print(size)
 
         # 画像が3チャンネル以外の場合は3チャンネルに変換する
         channels = 1 if len(image.shape) == 2 else image.shape[2]

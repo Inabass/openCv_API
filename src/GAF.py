@@ -35,24 +35,16 @@ def rotateImage(img, orientation):
 
     return img_rotate
 
-def main(image):
-    # img = io.BytesIO(image)
-    # img_pil = Image.open(img)
-    # try:
-    #     exifinfo = img_pil._getexif()
-    #     orientation = exifinfo.get(0x112, 1)
-    #     img_tmp_rotate = rotateImage(img_pil, orientation)
-    # except:
-    #     pass
-
-    # img_numpy = np.asarray(img_pil)
-    # cv2.imwrite(os.path.join("../input/train/", "target.jpg".format(1)), img_numpy)
-    image = cv2.imread(str(image))
-    
+def resize (image, size):
     h, w = image.shape[:2]
-    width = 800
+    width = size
     height = round(h * (width / w))
     image = cv2.resize(image, dsize=(width, height))
+    return image
+
+def main(image):
+    image = cv2.imread(str(image))
+    originImage = image
 
     channels = 1 if len(image.shape) == 2 else image.shape[2]
     if channels == 1:
@@ -67,14 +59,23 @@ def main(image):
     weights = "../models/face_recognizer_fast.onnx"
     face_recognizer = cv2.FaceRecognizerSF_create(weights, "")
 
-    # 入力サイズを指定する
-    height, width, _ = image.shape
-    face_detector.setInputSize((width, height))
+    _, width, _ = image.shape
+    size = width
 
-    # 顔を検出する
-    _, faces = face_detector.detect(image)
+    while True:
+        image = resize(originImage, size)
+        # 入力サイズを指定する
+        height, width, _ = image.shape
+        face_detector.setInputSize((width, height))
+        # 顔を検出する
+        hoge, faces = face_detector.detect(image)
+        if not(faces is None):
+            break
+        size = size - 100
+        if size < 300:
+            break
+        print(size)
 
-    print(faces)
 
     # 検出された顔を切り抜く
     aligned_faces = []
