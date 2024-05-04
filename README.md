@@ -1,16 +1,15 @@
 # openCv_API
 
-GAF.py
+## 環境
+docker環境を用意しています
 ```
-python3 GAF.py ../input/train/abeA.jpeg
+$make build
+$make up
 ```
+で環境が起動します。
 
-GFD.py
+APIを起動するには
 ```
-python3 GFD.py ../output/crop/face001.jpg 
+$make api
 ```
-
-FR.py
-```
-python3 FR.py ../input/test/abeB.jpeg
-```
+で起動します。
