@@ -70,68 +70,74 @@ def main(image):
     weights = "../models/face_recognizer_fast.onnx"
     face_recognizer = cv2.FaceRecognizerSF_create(weights, "")
 
+    # 画像を読み込む
+    image = cv2.imread(str(image))
+    originImage = image
+    h, w = image.shape[:2]
+    _, width, _ = image.shape
+    size = width
+
     while True:
-        # 画像を読み込む
-        image = cv2.imread(str(image))
-        originImage = image
-    
-        h, w = image.shape[:2]
-        _, width, _ = image.shape
-        size = width
-
-        while True:
-            image = resize(originImage, size)
-            # 入力サイズを指定する
-            height, width, _ = image.shape
-            face_detector.setInputSize((width, height))
-            # 顔を検出する
-            hoge, faces = face_detector.detect(image)
-            if not(faces is None):
-                break
-            size = size - 100
-            if size < 300:
-                break
-            print(size)
-
-        # 画像が3チャンネル以外の場合は3チャンネルに変換する
-        channels = 1 if len(image.shape) == 2 else image.shape[2]
-        if channels == 1:
-            image = cv2.cvtColor(image, cv2.COLOR_GRAY2BGR)
-        if channels == 4:
-            image = cv2.cvtColor(image, cv2.COLOR_BGRA2BGR)
-
+        image = resize(originImage, size)
         # 入力サイズを指定する
         height, width, _ = image.shape
         face_detector.setInputSize((width, height))
-
         # 顔を検出する
-        result, faces = face_detector.detect(image)
-        faces = faces if faces is not None else []
+        hoge, faces = face_detector.detect(image)
+        if not(faces is None):
+            break
+        size = size - 100
+        if size < 300:
+            break
+        print(size)
 
-        for face in faces:
-            # 顔を切り抜き特徴を抽出する
-            aligned_face = face_recognizer.alignCrop(image, face)
-            feature = face_recognizer.feature(aligned_face)
+    # 画像が3チャンネル以外の場合は3チャンネルに変換する
+    channels = 1 if len(image.shape) == 2 else image.shape[2]
+    if channels == 1:
+        image = cv2.cvtColor(image, cv2.COLOR_GRAY2BGR)
+    if channels == 4:
+        image = cv2.cvtColor(image, cv2.COLOR_BGRA2BGR)
 
-            # 辞書とマッチングする
-            result, user = match(face_recognizer, feature, dictionary)
+    # 入力サイズを指定する
+    height, width, _ = image.shape
+    face_detector.setInputSize((width, height))
 
-            # 顔のバウンディングボックスを描画する
-            box = list(map(int, face[:4]))
-            color = (0, 255, 0) if result else (0, 0, 255)
-            thickness = 2
-            cv2.rectangle(image, box, color, thickness, cv2.LINE_AA)
+     # 顔を検出する
+    result, faces = face_detector.detect(image)
+    faces = faces if faces is not None else []
 
-            # 認識の結果を描画する
-            id, score = user if result else ("unknown", 0.0)
-            text = "{0} ({1:.2f})".format(id, score)
-            position = (box[0], box[1] - 10)
-            font = cv2.FONT_HERSHEY_SIMPLEX
-            scale = 0.6
-            cv2.putText(image, text, position, font, scale, color, thickness, cv2.LINE_AA)
+    res = []
 
-        # 画像を表示する
-        cv2.imwrite(os.path.join("../output/result/", "result.jpg".format(1)), image)
+    for face in faces:
+        # 顔を切り抜き特徴を抽出する
+        aligned_face = face_recognizer.alignCrop(image, face)
+        feature = face_recognizer.feature(aligned_face)
 
+        # 辞書とマッチングする
+        result, user = match(face_recognizer, feature, dictionary)
+
+        # 顔のバウンディングボックスを描画する
+        box = list(map(int, face[:4]))
+        color = (0, 255, 0) if result else (0, 0, 255)
+        thickness = 2
+        cv2.rectangle(image, box, color, thickness, cv2.LINE_AA)
+
+        # 認識の結果を描画する
+        id, score = user if result else ("unknown", 0.0)
+        text = "{0} ({1:.2f})".format(id, score)
+        position = (box[0], box[1] - 10)
+        font = cv2.FONT_HERSHEY_SIMPLEX
+        scale = 0.6
+        cv2.putText(image, text, position, font, scale, color, thickness, cv2.LINE_AA)
+        res.append({
+            'name' : id, 
+            'score': score
+            })
+
+    # 画像を表示する
+    cv2.imwrite(os.path.join("../output/result/", "result.jpg".format(1)), image)
+
+    return res
+        
 if __name__ == '__main__':
     main()

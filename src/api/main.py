@@ -19,6 +19,8 @@ async def create_upload_files(image: UploadFile = File(...)):
             raise HTTPException(status_code=500, detail='Failed to convert an image.')
         finally:
             filepath.unlink()
+
+        return {"message": "succes"}
         # print(filepath)
         
         # data = await image.read()
@@ -36,11 +38,13 @@ async def create_upload_files(image: UploadFile = File(...)):
 async def create_upload_files(image: UploadFile  = File(...)):
         filepath = save_upload_file_tmp(image)
         try:
-             FR.main(filepath)
+             res = FR.main(filepath)
         except Exception as e:
             raise HTTPException(status_code=500, detail='Failed to convert an image.')
         finally:
             filepath.unlink()
+
+        return {"message": res}
 
 def save_upload_file_tmp(upload_file: UploadFile) -> Path:
     try:
